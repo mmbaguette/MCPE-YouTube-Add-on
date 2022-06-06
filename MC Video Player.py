@@ -8,6 +8,7 @@ import numpy as np
 import shutil
 import ffmpeg
 import sys
+import uuid
 
 max_frames = 200
 max_height = 70
@@ -16,13 +17,7 @@ height_ratio = 0.5 # width = max_height / height_ratio
 tick = 0.05
 
 def generate_uuid():
-    url_b = "https://www.uuidgenerator.net/version1/bulk.json?amount=1"
-    b = rq.get(url_b)
-
-    if b.status_code == 200:
-        return json.loads(b.text)[0]
-    else:
-        return None
+    return str(uuid.uuid4())
 
 def create_frames(fileOrUrl, videoName, blocksPath):
     cap = cv2.VideoCapture(fileOrUrl)
@@ -116,7 +111,7 @@ def download_audio(soundsPath):
 
 def youtube_video(url):
     ydl_opts = {
-        'format': 'worstvideo[fps=30]+worstaudio', # CHANGE FOR VIDEO
+        'format': 'worstvideo[fps=30]+worstaudio', # CHANGE FOR VIDEO/AUDIO QUALITY
         'outtmpl': "youtube_video.%(ext)s",
         "postprocessors": [{
             'key': 'FFmpegVideoConvertor',
