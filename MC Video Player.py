@@ -2,7 +2,7 @@ import cv2
 import os
 import requests as rq
 import json
-from distutils.dir_util import copy_tree
+from shutil import copytree
 import youtube_dl
 import numpy as np
 import shutil
@@ -10,70 +10,93 @@ import ffmpeg
 import sys
 import uuid
 
-max_frames = 200
-max_height = 70
-max_FPS = 5
+max_frames = 200 # max number of frames inside video before it's trimmed
+max_height = 70 # height of video resolution in pixels
+max_FPS = 5 # FPS of video (lower FPS, more frames in total, longer video)
 height_ratio = 0.5 # width = max_height / height_ratio
-tick = 0.05
+tick = 0.05 # frame delay in ticks (don't change)
+use_ending = True # if we want a 1 second "The End" image to appear at the end so the player knows when to start the audio
 
-def generate_uuid():
+if use_ending:
+    max_frames -= max_FPS # we add a 1 second "the end"
+
+# unique ID used in parts of manifest.json
+def generate_uuid(): 
     return str(uuid.uuid4())
 
-def create_frames(fileOrUrl, videoName, blocksPath):
+def resize_double_frames(frame):
+    frame_resized = cv2.resize(frame, (round(max_height / height_ratio), max_height))
+    height, width = frame_resized.shape[:2]
+
+    lx1,lx2,ly1,ly2 = 0, int(width / 2), 0, height # left
+    rx1,rx2,ry1,ry2 = lx2, width, 0, height
+
+    left_image = frame_resized[ly1:ly2,lx1:lx2] # cropped left image 
+    right_image = frame_resized[ry1:ry2,rx1:rx2] #right
+    return left_image, right_image
+
+# generate frames to be displayed in the minecraft video
+def create_frames(fileOrUrl, videoName, blocksPath): 
     cap = cv2.VideoCapture(fileOrUrl)
     fps = cap.get(cv2.CAP_PROP_FPS)
     frames = str(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    video_frames_left = []
-    video_frames_right = []
-    print(f"Generating {frames} frames...")
+    ending_left = ending_right = False
+    frame_count_i = 0
 
-    while(cap.isOpened()): # Read until video is completed
+    print(f"Generating {frames} frames...")
+    while(cap.isOpened()): # Read each frame in video until we're done
         ret, frame = cap.read() # Capture frame-by-frame
 
         if ret:
-            frame_resized = cv2.resize(frame, (round(max_height / height_ratio), max_height))
-            height, width = frame_resized.shape[:2]
+            leftBlock, rightBlock = resize_double_frames(frame)
 
-            lx1,lx2,ly1,ly2 = 0, int(width / 2), 0, height # left
-            rx1,rx2,ry1,ry2 = lx2, width, 0, height
-
-            leftBlock = frame_resized[ly1:ly2,lx1:lx2]
-            rightBlock = frame_resized[ry1:ry2,rx1:rx2]
-
-            video_frames_left.append(leftBlock)
-            video_frames_right.append(rightBlock)
+            if (frame_count_i == 0):
+                left_block_video = leftBlock
+                right_block_video = rightBlock
+            else:
+                left_block_video = cv2.vconcat([left_block_video, leftBlock])
+                right_block_video = cv2.vconcat([right_block_video, rightBlock])
+            frame_count_i+=1
         else:
             break
     cap.release()
     os.remove(fileOrUrl)
+    
+    if (use_ending):
+        try: # add ending frames to indicate end of video
+            ending_name = [i for i in os.listdir(os.getcwd()) if i.startswith("ending.")][0]
+            ending = cv2.imread(ending_name, flags=cv2.IMREAD_UNCHANGED)
 
-    print("Stacking frames...")
-    left_block_video = cv2.vconcat(video_frames_left)
-    right_block_video = cv2.vconcat(video_frames_right)
+            if (type(ending) is np.ndarray):
+                ending_left, ending_right = resize_double_frames(ending) # resize ending frames to fit
+                print(f"Adding {ending_name} to the end.")
+
+                for _ in range(0, max_FPS):
+                    left_block_video = cv2.vconcat([left_block_video, ending_left])
+                    right_block_video = cv2.vconcat([right_block_video, ending_right])
+            else:
+                print(f"Could not read {ending_name} image.")
+                raise IndexError
+        except IndexError:
+            print("No \"ending\" images found.")        
 
     leftImgPath = f"{blocksPath}left_{videoName}_atlas.png"
     rightImgPath = f"{blocksPath}right_{videoName}_atlas.png"
     print("Writing images to blocks folder...")
 
-    try:
-        if cv2.imwrite(leftImgPath, left_block_video) and cv2.imwrite(rightImgPath, right_block_video):
-            print("Successfully saved flipbook images!")
-        else:
-            print("Something went wrong. The flipbook images could not be saved...")
-            print(left_block_video.shape)
-            print(right_block_video.shape)
-            print(leftImgPath)
-            print(rightImgPath)
-            print(f"Left path exists: {os.path.exists(leftImgPath)}")
-            print(f"Right path exists: {os.path.exists(leftImgPath)}")
-            cv2.imshow("Left image", left_block_video)
-            cv2.imshow("Right image", right_block_video)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-            sys.exit(-1)
-    except:
-        print("Something's wrong with the video you shared. Perhaps try a different format?")
-        sys.exit(-1)
+    if cv2.imwrite(leftImgPath, left_block_video) and cv2.imwrite(rightImgPath, right_block_video):
+        print("Successfully saved flipbook images!")
+    else:
+        cv2.imwrite("left.png", left_block_video)
+        cv2.imwrite("right.png", right_block_video)
+        print("Something went wrong. The flipbook images could not be saved...")
+        print(left_block_video.shape)
+        print(right_block_video.shape)
+        print(leftImgPath)
+        print(rightImgPath)
+        print(f"Left path exists: {os.path.exists(leftImgPath)}")
+        print(f"Right path exists: {os.path.exists(leftImgPath)}")
+        sys.exit(1)
 
     return fps
 
@@ -86,21 +109,21 @@ def trim_audio(input_path, output_path, start=0, end=60):
         .filter_('asetpts', 'PTS-STARTPTS')
     )
 
-    output = ffmpeg.output(aud, output_path)
+    output = ffmpeg.output(aud, output_path, loglevel="quiet")
     output.run()
 
 def download_audio(soundsPath):
     audio_output_path = soundsPath + "sound.ogg"
-    ffmpeg.input("youtube_video.mp4").filter('fps', fps=max_FPS, round='up').output('fps_change.mp4').run()
+    ffmpeg.input("youtube_video.mp4").filter('fps', fps=max_FPS, round='up').output('fps_change.mp4', loglevel="quiet").run()
 
-    cap = cv2.VideoCapture("fps_change.mp4")
-    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap = cv2.VideoCapture("fps_change.mp4") # get new frame count of video with modified fps
+    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) 
     cap.release()
 
     if frames > max_frames:
         frames = max_frames
 
-    ffmpeg.input("fps_change.mp4").trim(start_frame=0, end_frame=frames).output('output.mp4').run()
+    ffmpeg.input("fps_change.mp4").trim(start_frame=0, end_frame=frames).output('output.mp4', loglevel="quiet").run()
 
     end_duration = round(frames / max_FPS, 2)
 
@@ -165,6 +188,7 @@ def main():
     packDescription = "Made by MmBaguette's Minecraft Video Player from YouTube!\n\n" + video_data["description"]
 
     packPath = os.getcwd() + "\\" + packName + "\\"
+
     resourcePackPath = packPath + packName + " R\\"
     behaviourPackPath = packPath + packName + " B\\"
 
@@ -206,10 +230,10 @@ def main():
 
     if os.path.exists("fps_change.mp4"):
         os.remove("fps_change.mp4")
-
+    
     os.makedirs(packPath)
-    copy_tree("Video Addon R", resourcePackPath)
-    copy_tree("Video Addon B", behaviourPackPath)
+    copytree("Video Addon R", resourcePackPath) # copy resource and behaviour pack folders
+    copytree("Video Addon B", behaviourPackPath)
     
     print("Retrieving video thumbnail and setting pack icon...")
     thumbnail_url = f"http://img.youtube.com/vi/{video_data['id']}/0.jpg"
