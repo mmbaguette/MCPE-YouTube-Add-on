@@ -13,9 +13,12 @@ import uuid
 max_frames = 200 # max number of frames inside video before it's trimmed
 max_height = 70 # height of video resolution in pixels
 max_FPS = 5 # FPS of video (lower FPS, more frames in total, longer video)
+use_ending = True # if we want a 1 second "The End" image to appear at the end so the player knows when to start the audio
+
 height_ratio = 0.5 # width = max_height / height_ratio
 tick = 0.05 # frame delay in ticks (don't change)
-use_ending = True # if we want a 1 second "The End" image to appear at the end so the player knows when to start the audio
+
+print(f"\Maximum pixels in video: {max_frames*round(max_height / height_ratio)}\n")
 
 if use_ending:
     max_frames -= max_FPS # we add a 1 second "the end"
