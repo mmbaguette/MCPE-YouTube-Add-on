@@ -2,6 +2,8 @@
 
 Play YouTube videos with sound on Minecraft Bedrock Edition, using only add-ons!
 
+![image](https://user-images.githubusercontent.com/76597978/172966574-0303623b-393f-4a9f-8e8a-f26462e9997d.png)
+
 ## Features
 - 🎥 Animates blocks to display a short video in a continuous loop
 - 📺 Left and right block for a 1 by 2 size display
