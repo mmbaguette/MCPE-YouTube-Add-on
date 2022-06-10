@@ -137,14 +137,13 @@ def download_audio(soundsPath):
 
 def youtube_video(url):
     ydl_opts = {
-        'format': 'worstvideo[fps=30]+worstaudio', # CHANGE FOR VIDEO/AUDIO QUALITY
+        'format': 'worstvideo[fps=30]+worstaudio', # video/audio quality
         'outtmpl': "youtube_video.%(ext)s",
         "postprocessors": [{
             'key': 'FFmpegVideoConvertor',
             'preferedformat' : 'mp4'
         }]
     }
-
     try:
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=True)
@@ -156,7 +155,7 @@ def youtube_video(url):
             video_title = info_dict.get("title", None)
     except: # if no 30 FPS frames
         print("No 30 FPS videos found")
-        ydl_opts["format"] = 'bestvideo+bestaudio'
+        ydl_opts["format"] = 'worstvideo+worstaudio'
         
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             try:
