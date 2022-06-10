@@ -18,7 +18,7 @@ use_ending = True # if we want a 1 second "The End" image to appear at the end s
 height_ratio = 0.5 # width = max_height / height_ratio
 tick = 0.05 # frame delay in ticks (don't change)
 
-print(f"\Maximum pixels in video: {max_frames*round(max_height / height_ratio)}\n")
+print(f"\nMaximum pixels in video: {max_frames*round(max_height / height_ratio)}")
 
 if use_ending:
     max_frames -= max_FPS # we add a 1 second "the end"
