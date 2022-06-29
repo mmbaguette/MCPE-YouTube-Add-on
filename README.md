@@ -2,7 +2,7 @@
 
 Play YouTube videos with sound on Minecraft Bedrock Edition, using only add-ons!
 
-Try out the Obi-wan Kenobi series in Minecraft: https://github.com/mmbaguette/MCPE-YouTube-Add-on/blob/main/obiwan_kenobi.mcaddon
+Try out the Obi-wan Kenobi series video add-on in Minecraft: https://github.com/mmbaguette/MCPE-YouTube-Add-on/blob/main/obiwan_kenobi.mcaddon
 
 ![image](https://user-images.githubusercontent.com/76597978/172966574-0303623b-393f-4a9f-8e8a-f26462e9997d.png)
 
@@ -15,7 +15,7 @@ Try out the Obi-wan Kenobi series in Minecraft: https://github.com/mmbaguette/MC
 
 ## How to Use
 Read the setup below before using.
-- Enter the URL of the YouTube video you want to download (grabs as many frames as possible from the beginning of the video until it reaches `max_frames`)
+- Enter the URL of the YouTube video you want to download or the name of the video file (grabs as many frames as possible from the beginning of the video until it reaches `max_frames`)
 - Name your addon (only letters, numbers and underscores!)
 - Import the addon by double clicking on the new `.mcaddon` file (same location as script)
 - Activate the behaviour and resource pack inside your world settings
