@@ -1,0 +1,15 @@
+{
+    "format_version": [
+        1,
+        1,
+        0
+    ],
+    "vid:left_movie": {
+        "textures": "left_movie",
+        "sound": "glass"
+    },
+    "vid:right_movie": {
+        "textures": "right_movie",
+        "sound": "glass"
+    }
+}

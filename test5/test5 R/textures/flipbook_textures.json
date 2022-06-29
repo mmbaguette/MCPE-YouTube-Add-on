@@ -1,0 +1,12 @@
+[
+    {
+        "flipbook_texture": "textures/blocks/left_movie_atlas",
+        "atlas_tile": "left_movie",
+        "ticks_per_frame": 4.0
+    },
+    {
+        "flipbook_texture": "textures/blocks/right_movie_atlas",
+        "atlas_tile": "right_movie",
+        "ticks_per_frame": 4.0
+    }
+]

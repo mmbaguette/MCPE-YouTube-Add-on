@@ -10,8 +10,8 @@ import ffmpeg
 import sys
 import uuid
 
-max_frames = 90 # max number of frames inside video before it's trimmed
-max_height = 150 # height of video resolution in pixels
+max_frames = 210 # max number of frames inside video before it's trimmed
+max_height = 65 # height of video resolution in pixels
 max_FPS = 5 # FPS of video (lower FPS, more frames in total, longer video)
 use_ending = True # if we want a 1 second "The End" image to appear at the end so the player knows when to start the audio
 
@@ -141,7 +141,7 @@ def download_audio(soundsPath):
     os.remove("youtube_video.mp4")
     os.remove("fps_change.mp4")
 
-def youtube_video(url):
+def youtube_video(url: str):
     ydl_opts = {
         'format': 'worstvideo[fps=30]+worstaudio', # video/audio quality
         'outtmpl': "youtube_video.%(ext)s",
@@ -190,9 +190,22 @@ def youtube_video(url):
     return video_data
 
 def main():
-    youtube_url = input("\nEnter a Youtube URL: ")
-    video_data = youtube_video(youtube_url)
+    youtube_url_or_file = input("\nEnter a Youtube URL or file name/path: ")
     packName = input("\nWhat would you like to call your video? ").replace(" ","_")
+    
+    if youtube_url_or_file.startswith("http"):
+        video_data = youtube_video(youtube_url_or_file)
+    elif os.path.isfile(youtube_url_or_file):
+        video_data = {
+            "title": packName,
+            "description": ""
+        }
+        
+        shutil.copy(youtube_url_or_file, "youtube_video.mp4") # copy video file
+    else:
+        print("No URL or file found.")
+        return
+    
     packDescription = "Made by MmBaguette's Minecraft Video Player from YouTube!\n\n" + video_data["description"]
 
     packPath = os.getcwd() + "\\" + packName + "\\"
@@ -242,22 +255,32 @@ def main():
     copytree("Video Addon R", resourcePackPath) # copy resource and behaviour pack folders
     copytree("Video Addon B", behaviourPackPath)
     
-    print("Retrieving video thumbnail and setting pack icon...")
-    thumbnail_url = f"http://img.youtube.com/vi/{video_data['id']}/0.jpg"
-    t = rq.get(thumbnail_url, stream=True)
+    if 'id' in video_data:
+        print("Retrieving video thumbnail and setting pack icon...")
+        thumbnail_url = f"http://img.youtube.com/vi/{video_data['id']}/0.jpg"
+        t = rq.get(thumbnail_url, stream=True)
 
-    if t.status_code == 200:
-        image = np.asarray(bytearray(t.raw.read()), dtype="uint8")
-        image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        image = cv2.resize(image, (128,128))
-        
-        cv2.imwrite(thumbnailFilePathLeft, image)
-        cv2.imwrite(thumbnailFilePathRight, image)
-        cv2.imwrite(pack_iconRPath, image)
-        cv2.imwrite(pack_iconBPath, image)
+        if t.status_code == 200:
+            image = np.asarray(bytearray(t.raw.read()), dtype="uint8")
+            image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+            image = cv2.resize(image, (128,128))
+        else:
+            print("Could not retrive video thumbnail!")
+            sys.exit(-1)
     else:
-        print("Could not retrive video thumbnail!")
-        sys.exit(-1)
+        cap = cv2.VideoCapture(youtube_url_or_file)
+
+        while(cap.isOpened()):
+            ret, frame = cap.read()
+
+            if ret:
+                image = cv2.resize(frame, (128,128))
+                break # only retrieve first frame
+
+    cv2.imwrite(thumbnailFilePathLeft, image) # save as add-on's thumbnail image
+    cv2.imwrite(thumbnailFilePathRight, image) 
+    cv2.imwrite(pack_iconRPath, image)
+    cv2.imwrite(pack_iconBPath, image)
 
     print("Extracting audio...")
     download_audio(soundsPath)
@@ -282,13 +305,13 @@ def main():
         "format_version": "1.16.0",
         "minecraft:block": {
             "description": {
-            "identifier": f"vid:left_{packName}",
-            "is_experimental": False
+                "identifier": f"vid:left_{packName}",
+                "is_experimental": False
             },
             "components": {
-            "minecraft:destroy_time": 0.2,
-            "minecraft:explosion_resistance": 1.0,
-            "minecraft:map_color": "#ffffff"
+                "minecraft:destroy_time": 0.2,
+                "minecraft:explosion_resistance": 1.0,
+                "minecraft:map_color": "#ffffff"
             }
         }
     }
@@ -297,13 +320,13 @@ def main():
         "format_version": "1.16.0",
         "minecraft:block": {
             "description": {
-            "identifier": f"vid:right_{packName}",
-            "is_experimental": False
+                "identifier": f"vid:right_{packName}",
+                "is_experimental": False
             },
             "components": {
-            "minecraft:destroy_time": 0.2,
-            "minecraft:explosion_resistance": 1.0,
-            "minecraft:map_color": "#ffffff"
+                "minecraft:destroy_time": 0.2,
+                "minecraft:explosion_resistance": 1.0,
+                "minecraft:map_color": "#ffffff"
             }
         }
     }
@@ -388,7 +411,7 @@ def main():
                 "textures": f"textures/blocks/left_{packName}_single" # block thumbnail
             },
             f"right_{packName}": {
-                "textures": f"textures/blocks/right_{packName}_single" # block thumbnail
+                "textures": f"textures/blocks/right_{packName}_single"
             }
         }
     }
@@ -412,7 +435,7 @@ def main():
     sound_data = {
         "format_version": "1.14.0",
         "sound_definitions": {
-            f"movie.sound": {
+            "movie.sound": {
                 "category": "neutral", # ui category ignores range
                 "sounds": [
                     "sounds/sound"
@@ -424,8 +447,7 @@ def main():
     languagesData = ["en_US"]
     en_USData = f"tile.vid:{packName.lower()}.name={packName} Video Player Add-on"
     
-    get_vidFunctionData = f"give @p vid:left_{packName} 1\n"
-    get_vidFunctionData += f"give @p vid:right_{packName} 1"
+    get_vidFunctionData = f"give @p vid:left_{packName} 1\n" + f"give @p vid:right_{packName} 1"
 
     # write the files for terrain texture, flipbook textures, manifest e.t.c.
     texturesW = open(texturesFilePath, "w")

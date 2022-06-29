@@ -1,0 +1,39 @@
+{
+    "format_version": 2,
+    "header": {
+        "name": "test5_B",
+        "description": "Made by MmBaguette's Minecraft Video Player from YouTube!\n\n",
+        "uuid": "185c3573-1d2e-4ebc-a10d-04fa9c74783d",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            13,
+            0
+        ]
+    },
+    "modules": [
+        {
+            "type": "data",
+            "uuid": "5a10a73d-b92e-4b93-9478-6862f528eac0",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "version": [
+                1,
+                0,
+                0
+            ],
+            "uuid": "0967627d-f0e3-44db-aff1-da3b19891d8a"
+        }
+    ]
+}
