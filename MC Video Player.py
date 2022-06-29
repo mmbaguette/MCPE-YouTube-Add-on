@@ -10,10 +10,16 @@ import ffmpeg
 import sys
 import uuid
 
-max_frames = 200 # max number of frames inside video before it's trimmed
-max_height = 70 # height of video resolution in pixels
+max_frames = 90 # max number of frames inside video before it's trimmed
+max_height = 150 # height of video resolution in pixels
 max_FPS = 5 # FPS of video (lower FPS, more frames in total, longer video)
 use_ending = True # if we want a 1 second "The End" image to appear at the end so the player knows when to start the audio
+
+"""
+TODO:
+Only download first max_frames from video (or time) for faster downloads.
+Download starting from a specific time
+"""
 
 height_ratio = 0.5 # width = max_height / height_ratio
 tick = 0.05 # frame delay in ticks (don't change)
@@ -213,7 +219,6 @@ def main():
     manifestBFilePath = behaviourPackPath + "manifest.json"
 
     get_vidFilePath = functionsPath + "get_vid.mcfunction"
-    play_vidFilePath = functionsPath + "play_vid.mcfunction"
     languagesFilePath = textsPath + "languages.json"
     en_USFilePath = textsPath + "en_US.lang"
     leftBlockPath = blocksBPath + f"left_{packName}.json"
@@ -407,8 +412,8 @@ def main():
     sound_data = {
         "format_version": "1.14.0",
         "sound_definitions": {
-            f"{packName}.sound": {
-                "category": "ui",
+            f"movie.sound": {
+                "category": "neutral", # ui category ignores range
                 "sounds": [
                     "sounds/sound"
                 ]
@@ -421,9 +426,6 @@ def main():
     
     get_vidFunctionData = f"give @p vid:left_{packName} 1\n"
     get_vidFunctionData += f"give @p vid:right_{packName} 1"
-
-    # setup
-    play_vidData = f"playsound {packName}.sound @a"
 
     # write the files for terrain texture, flipbook textures, manifest e.t.c.
     texturesW = open(texturesFilePath, "w")
@@ -457,10 +459,6 @@ def main():
     get_vidW = open(get_vidFilePath, "w")
     get_vidW.write(get_vidFunctionData)
     get_vidW.close()
-
-    play_vidW = open(play_vidFilePath, "w")
-    play_vidW.write(play_vidData)
-    play_vidW.close()
 
     leftBlockW = open(leftBlockPath, "w")
     leftBlockW.write(json.dumps(leftBlockData, indent=4))

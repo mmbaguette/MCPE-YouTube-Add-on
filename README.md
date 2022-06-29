@@ -18,8 +18,8 @@ Read the setup below before using.
 - Import the addon by double clicking on the new `.mcaddon` file (same location as script)
 - Activate the behaviour and resource pack inside your world settings
 - When in game, run `/function get_vid` to get the left and right blocks for your video
-- Use `/function play_vid` preferably in a command block with a button so you can play the audio exactly when the video starts
-- Place down the blocks next to each other and enjoy the show!
+- Use `/playsound movie.sound` for audio (preferably in a command block with a button so you can play the audio exactly when the video starts)
+- Place down the left and right blocks next to each other and enjoy the show!
 
 ## Download and Setup
 
